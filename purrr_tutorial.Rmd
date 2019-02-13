@@ -1,0 +1,109 @@
+---
+title: "rstudio::conf 2019 Debriefing: purrr tutorial"
+author: Omair A. Khan
+date: February 13, 2019
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+---
+
+## Load packages
+
+```{r, message = FALSE}
+library(tidyverse)
+library(repurrrsive)
+```
+
+# Why purrr?
+
+## Introduction
+
+purrr addresses some of the friction identified in the base functions for "split-apply-combine":
+
+  * The `map()` family of functions is highly internally consistent, making it easier to transfer expertise from one function to another.
+  * There is greater encouragement for type-safe simplification, producing output that is more ready for the next step.
+  * purrr ennables concise syntax for defining anonymous functions.
+
+## `lapply()` vs. `purrr::map()`
+
+These are the core mapping functions of base and purrr, respectively. They are "list in, list out." The only difference is access to purrr’s shortcuts for indexing by name or position and for creating anonymous functions.
+
+## `lapply()` vs. `purrr::map()` | Example
+
+```{r}
+lapply(got_chars[1:3], function(x) x[["name"]])
+map(got_chars[1:3], "name")
+```
+
+## `sapply()` vs. `purrr::map()`
+
+`sapply()` is a base function that attempts to apply a reasonable simplification to the output of `lapply()`. It’s handy for interactive use, but due to the unpredictability of it return value, it’s unwise to use it in programming. There is no equivalent in purrr.
+
+## `sapply()` vs. `purrr::map()` | Example 1
+
+```{r}
+aliases1 <- sapply(got_chars[20:22], function(x) x[["aliases"]])
+str(aliases1)
+
+aliases2 <- sapply(got_chars[c(3, 22, 27)], function(x) x[["aliases"]])
+str(aliases2)
+```
+
+## `sapply()` vs. `purrr::map()` | Example 2
+
+With purrr, you would use `map()` to get a list back or `map_chr()` to get atomic character vector. If you use `map_chr()` when you should not, you’ll get an informative error right away and you can adjust your approach accordingly.
+
+```{r, error = TRUE}
+map(got_chars[13:15], "aliases")
+map_chr(got_chars[13:15], "aliases")
+```
+
+# Examples
+
+## Type-specific simplification 1 | `map()`
+
+```{r}
+got_chars %>% 
+  map("name")
+```
+
+## Type-specific simplification 1 | `map_chr()`
+
+```{r}
+got_chars %>% 
+  map_chr("name")
+```
+
+## Type-specific simplification 2 | `map()`
+
+```{r}
+# magrittr::extract is an alias for `[`
+
+got_chars %>%
+  map(magrittr::extract, c("name", "culture", "gender", "id", "born", "alive"))
+```
+
+## Type-specific simplification 2 | `map_df()`
+
+```{r}
+# magrittr::extract is an alias for `[`
+
+got_chars %>%
+  map_df(magrittr::extract, c("name", "culture", "gender", "id", "born", "alive"))
+```
+
+## Extracting statistics from multiple models
+
+```{r}
+mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+```
+
+## Thank you
+
+Find this presentation at https://github.com/fullstackstatistician/rstudio-conf-2019-purrr-debriefing.
+
